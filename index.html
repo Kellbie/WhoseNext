@@ -1,0 +1,1785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Whose Next?">
+<meta name="theme-color" content="#0a0a0a">
+<title>Whose Next?</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0a0a;
+  --surface: #111111;
+  --surface2: #1a1a1a;
+  --border: rgba(255,255,255,0.07);
+  --text: #f5f5f5;
+  --muted: #555;
+  --accent: #e8e8e8;
+  --red: #ff3b30;
+  --orange: #ff9500;
+  --blue: #0a84ff;
+  --green: #30d158;
+}
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ===== SCREENS ===== */
+.screen {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.screen.hidden { opacity: 0; pointer-events: none; transform: translateY(12px); }
+
+/* ===== ONBOARDING / TEMPLATE PICKER ===== */
+#onboarding {
+  background: var(--bg);
+  justify-content: flex-start;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.ob-header {
+  width: 100%;
+  padding: 56px 28px 20px;
+  flex-shrink: 0;
+}
+.ob-wordmark {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.ob-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(32px, 8vw, 48px);
+  font-weight: 800;
+  line-height: 1.05;
+  margin-top: 12px;
+  color: var(--text);
+  letter-spacing: -1px;
+}
+.ob-sub {
+  font-size: 15px;
+  color: var(--muted);
+  margin-top: 8px;
+  line-height: 1.5;
+}
+
+/* Type picker */
+.type-row {
+  display: flex;
+  gap: 8px;
+  padding: 0 28px;
+  width: 100%;
+  flex-shrink: 0;
+  margin-bottom: 4px;
+}
+.type-pill {
+  flex: 1;
+  padding: 12px 8px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.type-pill.active {
+  border-color: var(--text);
+  color: var(--text);
+  background: var(--surface2);
+}
+
+/* Pack grid */
+.pack-scroll {
+  flex: 1;
+  width: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.pack-section-label {
+  font-size: 11px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 16px;
+  margin-bottom: 4px;
+}
+.pack-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 18px;
+  padding: 20px 20px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  overflow: hidden;
+}
+.pack-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--pack-color, transparent);
+  border-radius: 2px 2px 0 0;
+}
+.pack-card:active { background: var(--surface2); }
+.pack-card.selected { border-color: var(--pack-color, var(--text)); }
+.pack-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+.pack-desc {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 5px;
+  line-height: 1.5;
+}
+.pack-count {
+  position: absolute;
+  top: 20px; right: 20px;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+.pack-check {
+  display: none;
+  position: absolute;
+  top: 18px; right: 16px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--pack-color, var(--text));
+  align-items: center; justify-content: center;
+  font-size: 11px;
+  color: #000;
+  font-weight: 800;
+}
+.pack-card.selected .pack-count { display: none; }
+.pack-card.selected .pack-check { display: flex; }
+
+.ob-footer {
+  width: 100%;
+  padding: 16px 28px;
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.ob-also-custom {
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 12px;
+}
+.ob-also-custom span {
+  color: var(--text);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.start-btn {
+  width: 100%;
+  padding: 17px;
+  border-radius: 14px;
+  border: none;
+  background: var(--text);
+  color: #000;
+  font-family: 'Syne', sans-serif;
+  font-size: 17px;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.start-btn:active { transform: scale(0.97); opacity: 0.85; }
+.start-btn:disabled { opacity: 0.25; pointer-events: none; }
+
+/* ===== CUSTOM DARES SCREEN ===== */
+#custom-screen {
+  background: var(--bg);
+  justify-content: flex-start;
+}
+.cs-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 52px 20px 16px;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.cs-back {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 14px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.cs-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  flex: 1;
+}
+.cs-type-row {
+  display: flex;
+  gap: 6px;
+  padding: 12px 20px;
+  width: 100%;
+  flex-shrink: 0;
+}
+.cs-type-pill {
+  padding: 8px 16px;
+  border-radius: 99px;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s;
+}
+.cs-type-pill.active { border-color: var(--text); color: var(--text); }
+.cs-list {
+  flex: 1;
+  overflow-y: auto;
+  width: 100%;
+  padding: 8px 20px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cs-item {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: fadeUp 0.2s ease;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.cs-item-text { flex: 1; font-size: 14px; line-height: 1.4; }
+.cs-del {
+  background: none; border: none;
+  color: var(--muted); font-size: 18px;
+  cursor: pointer; padding: 4px;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s;
+}
+.cs-del:active { color: var(--red); }
+.cs-empty {
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+  padding: 40px 0;
+  line-height: 2;
+}
+.cs-input-row {
+  width: 100%;
+  padding: 12px 20px;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.cs-input {
+  flex: 1;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: var(--text);
+  font-size: 15px;
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.cs-input:focus { border-color: rgba(255,255,255,0.3); }
+.cs-input::placeholder { color: var(--muted); }
+.cs-add-btn {
+  background: var(--text);
+  border: none;
+  border-radius: 12px;
+  width: 48px; height: 48px;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: #000;
+  font-weight: 800;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s;
+}
+.cs-add-btn:active { transform: scale(0.9); }
+
+/* ===== PLAY SCREEN ===== */
+#play-screen {
+  background: var(--bg);
+  justify-content: flex-start;
+  padding: 0;
+}
+
+/* Canvas for fluid background */
+#fluid-canvas {
+  position: absolute; inset: 0;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+#fluid-canvas.show { opacity: 1; }
+
+.play-top-bar {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 52px 20px 12px;
+}
+.play-home-btn {
+  background: rgba(255,255,255,0.08);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 9px 18px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  font-family: 'DM Sans', sans-serif;
+}
+.play-home-btn:active { background: rgba(255,255,255,0.15); }
+.play-pack-label {
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.play-custom-btn {
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 9px 14px;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Touch area - FULL REMAINING SCREEN */
+#touch-area {
+  position: relative;
+  z-index: 5;
+  flex: 1;
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.touch-hint {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+.touch-hint-line {
+  width: 40px;
+  height: 1.5px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 1px;
+}
+.touch-hint-text {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Touch dots */
+.tdot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  will-change: transform;
+}
+.tdot-ring {
+  position: absolute;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  top: 50%; left: 50%;
+}
+.tdot-inner {
+  position: absolute;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  top: 50%; left: 50%;
+}
+.tdot-label {
+  position: absolute;
+  bottom: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  opacity: 0;
+}
+
+/* Dot states */
+.tdot.idle .tdot-ring {
+  width: 70px; height: 70px;
+  border: 1.5px solid rgba(255,255,255,0.15);
+  animation: ring-breathe 2s ease-in-out infinite;
+}
+.tdot.idle .tdot-inner {
+  width: 44px; height: 44px;
+  background: rgba(255,255,255,0.12);
+}
+@keyframes ring-breathe {
+  0%, 100% { transform: translate(-50%,-50%) scale(1); opacity: 0.6; }
+  50% { transform: translate(-50%,-50%) scale(1.15); opacity: 1; }
+}
+
+/* Active spinning state */
+.tdot.spinning .tdot-ring {
+  width: 80px; height: 80px;
+  border: 2px solid rgba(255,255,255,0.3);
+  animation: ring-spin 0.8s ease-in-out infinite alternate;
+}
+.tdot.spinning .tdot-inner {
+  width: 50px; height: 50px;
+  background: rgba(255,255,255,0.2);
+  animation: inner-pulse 0.4s ease-in-out infinite alternate;
+}
+@keyframes ring-spin {
+  from { transform: translate(-50%,-50%) scale(0.9); }
+  to { transform: translate(-50%,-50%) scale(1.1); }
+}
+@keyframes inner-pulse {
+  from { transform: translate(-50%,-50%) scale(0.9); }
+  to { transform: translate(-50%,-50%) scale(1.05); }
+}
+
+/* Highlight state (being cycled on) */
+.tdot.highlight .tdot-ring {
+  width: 90px; height: 90px;
+  border: 2.5px solid rgba(255,255,255,0.9);
+  animation: highlight-anim 0.15s ease-out;
+}
+.tdot.highlight .tdot-inner {
+  width: 58px; height: 58px;
+  background: rgba(255,255,255,0.55);
+  animation: inner-highlight 0.15s ease-out;
+}
+@keyframes highlight-anim {
+  from { transform: translate(-50%,-50%) scale(0.8); }
+  to { transform: translate(-50%,-50%) scale(1); }
+}
+@keyframes inner-highlight {
+  from { transform: translate(-50%,-50%) scale(0.7); opacity: 0.3; }
+  to { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+}
+
+/* Dim state */
+.tdot.dim .tdot-ring {
+  width: 60px; height: 60px;
+  border: 1px solid rgba(255,255,255,0.07);
+  animation: none;
+  opacity: 0.3;
+}
+.tdot.dim .tdot-inner {
+  width: 36px; height: 36px;
+  background: rgba(255,255,255,0.05);
+  animation: none;
+}
+
+/* Winner state */
+.tdot.winner .tdot-ring {
+  width: 110px; height: 110px;
+  border: 2px solid rgba(255,255,255,0.8);
+  animation: winner-ring-anim 0.6s cubic-bezier(0.34,1.56,0.64,1);
+}
+.tdot.winner .tdot-inner {
+  width: 72px; height: 72px;
+  background: rgba(255,255,255,0.9);
+  animation: winner-inner-anim 0.6s cubic-bezier(0.34,1.56,0.64,1);
+}
+.tdot.winner .tdot-label {
+  opacity: 1;
+  animation: label-appear 0.4s 0.4s both ease;
+  color: rgba(255,255,255,0.7);
+}
+@keyframes winner-ring-anim {
+  0% { transform: translate(-50%,-50%) scale(0.5); opacity: 0; }
+  100% { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+}
+@keyframes winner-inner-anim {
+  0% { transform: translate(-50%,-50%) scale(0.3); }
+  100% { transform: translate(-50%,-50%) scale(1); }
+}
+@keyframes label-appear {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+/* Outer ripple for winner */
+.tdot.winner::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 130px; height: 130px;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(255,255,255,0.4);
+  border-radius: 50%;
+  animation: winner-ripple 1s ease-out infinite;
+}
+@keyframes winner-ripple {
+  from { transform: translate(-50%,-50%) scale(0.8); opacity: 0.8; }
+  to { transform: translate(-50%,-50%) scale(2.5); opacity: 0; }
+}
+
+/* Loser state */
+.tdot.loser .tdot-ring {
+  width: 50px; height: 50px;
+  border: 1px solid rgba(255,255,255,0.06);
+  animation: none;
+  opacity: 0.2;
+}
+.tdot.loser .tdot-inner {
+  width: 30px; height: 30px;
+  background: rgba(255,255,255,0.04);
+  animation: none;
+}
+
+/* Status line */
+.play-status {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  text-align: center;
+  padding: 12px 20px;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  flex-shrink: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.wait-progress {
+  position: absolute;
+  bottom: 0; left: 0;
+  height: 2px;
+  background: rgba(255,255,255,0.3);
+  border-radius: 1px;
+  display: none;
+}
+.wait-progress.show { display: block; }
+
+/* ===== RESULT SCREEN ===== */
+#result-screen {
+  background: var(--bg);
+  justify-content: center;
+  padding: 40px 28px;
+  padding-bottom: max(40px, env(safe-area-inset-bottom));
+}
+.result-eyebrow {
+  font-size: 11px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 14px;
+}
+.result-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(52px, 14vw, 80px);
+  font-weight: 800;
+  color: var(--text);
+  text-align: center;
+  line-height: 1;
+  letter-spacing: -2px;
+  animation: result-in 0.5s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes result-in {
+  from { transform: scale(0.6); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.result-type-tag {
+  margin-top: 14px;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 99px;
+  border: 1.5px solid var(--border);
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.card-wrapper {
+  margin-top: 28px;
+  width: 100%;
+  max-width: 400px;
+  animation: card-in 0.5s 0.2s both cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes card-in {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.result-card {
+  background: var(--surface);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  padding: 28px 24px;
+}
+.result-card-label {
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+.result-card-text {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(18px, 5vw, 23px);
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.4;
+}
+.no-card-msg {
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 24px;
+  line-height: 1.8;
+}
+.result-btns {
+  margin-top: 28px;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.res-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 14px;
+  border: none;
+  font-family: 'Syne', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s, opacity 0.1s;
+  letter-spacing: 0.2px;
+}
+.res-btn:active { transform: scale(0.97); opacity: 0.8; }
+.res-btn-primary { background: var(--text); color: #000; }
+.res-btn-ghost {
+  background: var(--surface);
+  color: var(--muted);
+  border: 1.5px solid var(--border);
+}
+
+/* ===== CONFETTI ===== */
+#confetti-canvas {
+  position: fixed; inset: 0;
+  pointer-events: none;
+  z-index: 200;
+}
+
+/* ===== FLUID BG ===== */
+/* handled in JS/canvas */
+
+::-webkit-scrollbar { width: 0; }
+</style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+<canvas id="fluid-canvas"></canvas>
+
+<!-- ===== ONBOARDING ===== -->
+<div class="screen" id="onboarding">
+  <div class="ob-header">
+    <div class="ob-wordmark">Whose Next?</div>
+    <div class="ob-title">Pick your pack.</div>
+    <div class="ob-sub">Choose what you're playing, then everyone puts a finger in.</div>
+  </div>
+
+  <div class="type-row">
+    <button class="type-pill active" data-type="both" onclick="setType('both',this)">Truths + Dares</button>
+    <button class="type-pill" data-type="truths" onclick="setType('truths',this)">Truths only</button>
+    <button class="type-pill" data-type="dares" onclick="setType('dares',this)">Dares only</button>
+  </div>
+
+  <div class="pack-scroll" id="packScroll"></div>
+
+  <div class="ob-footer">
+    <div class="ob-also-custom">or <span onclick="goTo('custom-screen')">add your own dares/truths</span></div>
+    <button class="start-btn" id="startBtn" onclick="startGame()" disabled>Select a pack to play</button>
+  </div>
+</div>
+
+<!-- ===== CUSTOM SCREEN ===== -->
+<div class="screen hidden" id="custom-screen">
+  <div class="cs-header">
+    <button class="cs-back" onclick="goTo('onboarding')">← Back</button>
+    <span class="cs-title">Custom</span>
+  </div>
+  <div class="cs-type-row">
+    <button class="cs-type-pill active" data-ctype="dare" onclick="setCType('dare',this)">Dare</button>
+    <button class="cs-type-pill" data-ctype="truth" onclick="setCType('truth',this)">Truth</button>
+  </div>
+  <div class="cs-list" id="csList"></div>
+  <div class="cs-input-row">
+    <input class="cs-input" id="csInput" placeholder="Type a dare or truth..." maxlength="140"
+           onkeydown="if(event.key==='Enter')addCustom()">
+    <button class="cs-add-btn" onclick="addCustom()">+</button>
+  </div>
+</div>
+
+<!-- ===== PLAY SCREEN ===== -->
+<div class="screen hidden" id="play-screen">
+  <div class="play-top-bar">
+    <button class="play-home-btn" onclick="confirmHome()">Home</button>
+    <span class="play-pack-label" id="playPackLabel"></span>
+    <button class="play-custom-btn" onclick="goTo('custom-screen')">+ Custom</button>
+  </div>
+  <div id="touch-area">
+    <div class="touch-hint" id="touchHint">
+      <div class="touch-hint-line"></div>
+      <div class="touch-hint-text">Everyone press &amp; hold</div>
+      <div class="touch-hint-line"></div>
+    </div>
+  </div>
+  <div class="play-status" id="playStatus">
+    <span id="statusText"></span>
+    <div class="wait-progress" id="waitProgress" style="width:0%"></div>
+  </div>
+</div>
+
+<!-- ===== RESULT SCREEN ===== -->
+<div class="screen hidden" id="result-screen">
+  <div class="result-eyebrow" id="resultEyebrow">You got picked</div>
+  <div class="result-title" id="resultTitle">IT'S YOU</div>
+  <div class="result-type-tag" id="resultTypeTag"></div>
+  <div class="card-wrapper">
+    <div id="cardInner"></div>
+  </div>
+  <div class="result-btns">
+    <button class="res-btn res-btn-primary" onclick="playAgain()">Pick Again</button>
+    <button class="res-btn res-btn-ghost" onclick="goTo('onboarding')">Change Pack</button>
+  </div>
+</div>
+
+<script>
+// =============================================
+// DATA — Templates
+// =============================================
+const PACKS = [
+  {
+    id: 'friends-casual',
+    name: 'Friends',
+    desc: 'Casual, funny, no awkwardness required',
+    color: '#4ade80',
+    section: 'Casual',
+    truths: [
+      "What's the most embarrassing thing that's happened to you in public?",
+      "What's a secret you've never told anyone in this group?",
+      "Who here would you call first if you were in trouble?",
+      "What's the worst lie you've told and gotten away with?",
+      "What's something you'd never do for any amount of money?",
+      "If you could read one person's texts in this room, whose would it be?",
+      "What's the most childish thing you still do?",
+      "What's a habit you have that you'd be embarrassed if people found out?",
+      "What's the worst thing you've done to a friend and never apologized for?",
+      "Have you ever pretended to be sick to avoid plans? When?",
+      "Who in this group do you think has changed the most over time?",
+      "What's the pettiest thing you've done for revenge?",
+      "What's a text you sent that you immediately regretted?",
+      "What do you do when no one's watching that you'd be too embarrassed to admit?",
+      "What's the most you've ever spent on something totally unnecessary?",
+      "If someone made a documentary about your life, what would the most embarrassing scene be?",
+      "What's the rudest thought you've had about someone in this room?",
+      "Have you ever blamed something on someone else that was actually your fault?",
+      "What's something you've Googled that you'd hate for people to see?",
+      "What's your most irrational fear that you've never told anyone?"
+    ],
+    dares: [
+      "Do your best impression of someone in this group — they have to guess who.",
+      "Text the last person you were awkward with and say 'we need to talk'.",
+      "Let the group post something on your Instagram story for 10 minutes.",
+      "Do 20 push-ups or take a consequence chosen by the group.",
+      "Call someone not in the room and sing them happy birthday. Wrong month, wrong person.",
+      "Speak in an accent chosen by the group for the next 3 rounds.",
+      "Show the last 5 photos in your camera roll.",
+      "Do a 1-minute stand-up comedy set about your own life.",
+      "Let someone in the group change your phone wallpaper.",
+      "Narrate everything you do for the next 2 minutes like a documentary.",
+      "Imitate the person to your left so well they crack first.",
+      "Read your most recent DM out loud without context.",
+      "Let the group craft and send a message from your phone to someone they choose.",
+      "Do the worst dance you can manage for 30 seconds straight.",
+      "Tell an embarrassing story involving every person in the group.",
+      "Try to make someone in the group laugh using only facial expressions.",
+      "Recreate your most embarrassing photo using objects around you.",
+      "Do a full-on dramatic monologue to an inanimate object.",
+      "Text someone 'I have something important to tell you' and wait for the panic.",
+      "Let the group choose a caption and post it on your behalf."
+    ]
+  },
+  {
+    id: 'couple',
+    name: 'Couple Mode',
+    desc: 'Intimate, deep, a little bit spicy',
+    color: '#f472b6',
+    section: 'Intimate',
+    truths: [
+      "What was your first thought the first time you saw me?",
+      "What's something I do that you find secretly annoying?",
+      "When did you first realize you actually liked me?",
+      "What's the most jealous you've ever been in this relationship?",
+      "What's one thing you've never told me because you weren't sure how I'd react?",
+      "What's your honest opinion of my closest friend?",
+      "What's a fantasy you've never brought up because you weren't sure I'd be into it?",
+      "What do you think is the biggest difference between us?",
+      "If you had to describe our relationship in one movie title, what would it be?",
+      "When have you felt furthest from me and why?",
+      "What's something you pretend not to care about but actually do?",
+      "What's the most romantic thing I've done that you've never told me you loved?",
+      "Is there anything about our relationship you wish you could change?",
+      "What would you do if I moved to another country for work?",
+      "What's the most unattractive thing I do without knowing it?",
+      "Have you ever looked through my phone? What were you hoping not to find?",
+      "What's one thing about your past you're still scared to tell me?",
+      "What's a compliment you've never given me that you genuinely think?",
+      "What's something you feel I take for granted?",
+      "When do you feel most loved by me?"
+    ],
+    dares: [
+      "Serenade your partner with the cheesiest love song you can think of.",
+      "Let your partner write something on your arm and you can't wash it off for an hour.",
+      "Give a 2-minute speech about why you're the better half.",
+      "Let your partner pick your outfit for tomorrow.",
+      "Give the most dramatic proposal you can right now.",
+      "Re-enact your first date in 60 seconds.",
+      "Say three things you love about your partner — without stopping or hesitating.",
+      "Recreate your favorite photo together right now.",
+      "Let your partner give you a new nickname and use it for the rest of the game.",
+      "Kiss your partner somewhere unexpected.",
+      "Dance together for one full minute — no music.",
+      "Write a poem about your partner, minimum four lines, right now.",
+      "Stare into each other's eyes for 90 seconds without breaking.",
+      "Feed your partner something from the kitchen with your eyes closed.",
+      "Do your partner's morning routine impression.",
+      "Whisper three things about your partner in their ear loud enough for no one to hear.",
+      "Let your partner do your hair for the rest of the game.",
+      "Create a handshake with your partner in 30 seconds.",
+      "Tell the most embarrassing story involving both of you.",
+      "Describe your partner using only food."
+    ]
+  },
+  {
+    id: 'spicy',
+    name: 'Spicy',
+    desc: 'For people who can handle it',
+    color: '#f97316',
+    section: 'Adult',
+    truths: [
+      "What's the most scandalous thing you've done that no one in this room knows about?",
+      "Have you ever had feelings for someone in this room?",
+      "What's the most embarrassing thing that's happened to you in a romantic situation?",
+      "What's a secret you're genuinely afraid to tell anyone?",
+      "Have you ever sent something to the wrong person? What was it?",
+      "What's the boldest move you've ever made on someone?",
+      "What's something you've done that you knew was wrong but did anyway?",
+      "Have you ever ghosted someone you actually cared about?",
+      "What's the most scandalous reason you've ended something with someone?",
+      "What's the most embarrassing thing you'd do for money right now?",
+      "What's something about yourself you'd never tell a potential partner on a first date?",
+      "Who in this room do you think you'd be most compatible with romantically?",
+      "What's the wildest thing you've done when you thought no one was looking?",
+      "What's a rumor about yourself that's actually kind of true?",
+      "Have you ever lied to get out of an intimate situation?",
+      "What's the most rebellious thing you've ever done without getting caught?",
+      "What's something you've done drunk that sober-you would be horrified by?",
+      "Who is the last person you'd want to be stuck with overnight?",
+      "What's the most private thing about you that you've accidentally let slip?",
+      "What's the line you swore you'd never cross that you've already crossed?"
+    ],
+    dares: [
+      "Swap phones with someone for 3 minutes. They can look at anything.",
+      "Let the group send one text from your phone to anyone in your contacts.",
+      "Show the group your screen time report.",
+      "Do your most seductive walk across the room.",
+      "Call someone you haven't spoken to in over a year and talk for 2 minutes.",
+      "Let someone read your most recent conversation out loud.",
+      "Do a 1-minute roast of yourself — no mercy.",
+      "Post a photo with a caption written by the group. Stays up 15 minutes.",
+      "Let the group give you a dare from your own contact list — they pick who and what.",
+      "Remove one item of clothing for the rest of the game.",
+      "Let someone draw on your face with a marker. Stays until the game ends.",
+      "Read the last voice note you sent out loud as a speech.",
+      "Let the group change your bio on any social platform.",
+      "Do a dramatic reading of your most recent argument over text.",
+      "Go outside and shout something embarrassing chosen by the group.",
+      "Give the person to your left a 30-second back massage.",
+      "Describe your romantic situation right now in one brutally honest sentence.",
+      "Text your most recent ex exactly what the group tells you.",
+      "Sing the chorus of any song completely off-key on purpose.",
+      "Give a passionate 60-second sales pitch for yourself as a romantic partner."
+    ]
+  },
+  {
+    id: 'deep',
+    name: 'Deep Talk',
+    desc: 'For when you actually want to know each other',
+    color: '#818cf8',
+    section: 'Conversations',
+    truths: [
+      "What's something you believe about yourself that most people would disagree with?",
+      "What's the biggest risk you've ever taken? Was it worth it?",
+      "What's something you're still not over from your past?",
+      "What's a decision you made that changed your life in a way you didn't expect?",
+      "What do you think is your biggest flaw that you haven't fixed yet?",
+      "What's the harshest truth someone has ever told you?",
+      "What's something you've outgrown that used to define you?",
+      "When did you last cry, and what was it about?",
+      "What's something you've never forgiven yourself for?",
+      "What's a belief you hold that you've never said out loud?",
+      "What do you think is the biggest thing holding you back right now?",
+      "When in your life have you felt most lost?",
+      "What's the most honest thing you'd say if you had nothing to lose?",
+      "What's something you want to change about how you show up for people?",
+      "What's a version of yourself you've given up on?",
+      "What's the best piece of advice you ever ignored?",
+      "What's something you do to avoid dealing with hard emotions?",
+      "What do you think people get most wrong about you?",
+      "What's something about the future that genuinely scares you?",
+      "What's a conversation you keep putting off that you know you need to have?"
+    ],
+    dares: [
+      "Tell each person in the group one thing you genuinely admire about them.",
+      "Write down your biggest goal right now and show everyone.",
+      "Share something you made — a note, a sketch, a photo — that you're proud of but never showed anyone.",
+      "Call someone you've been meaning to reconnect with and just say hi.",
+      "Spend 60 seconds saying out loud every fear you can think of.",
+      "Tell the group your most unpopular opinion about something serious.",
+      "Do a one-minute voice note to yourself about what you want in a year.",
+      "Tell the story of the hardest week of your life in under two minutes.",
+      "Say something genuinely kind to each person here that you've never said before.",
+      "Tell the group what you think your biggest blind spot is.",
+      "Name one thing you wish you had the courage to do right now.",
+      "Give the most honest answer you can to: what kind of friend are you really?",
+      "Tell the group about someone who changed your life that they don't know about.",
+      "Describe the best version of yourself — as specifically as you can.",
+      "Read something from your notes app that you'd normally never share.",
+      "Tell the person you trust most in this room one thing you've been afraid to say.",
+      "Describe what you think people feel when they leave your presence.",
+      "Give a one-minute speech about something you believe in completely.",
+      "Tell the group what you think you'd be doing if you hadn't taken your current path.",
+      "Say the thing you most need to hear right now. Out loud."
+    ]
+  },
+  {
+    id: 'wild',
+    name: 'Wildcard',
+    desc: 'Random, chaotic, unpredictable',
+    color: '#facc15',
+    section: 'Chaos',
+    truths: [
+      "What's the strangest thing you've ever eaten on a dare or bet?",
+      "What's the most ridiculous thing you've cried about?",
+      "What's your go-to excuse for getting out of things you don't want to do?",
+      "What's the weirdest YouTube rabbit hole you've fallen down?",
+      "Have you ever done something embarrassing that you blamed on someone else?",
+      "What would the title of your autobiography be?",
+      "What's something you pretend to understand but absolutely don't?",
+      "What's the most unhinged thing you've ever put in a search bar?",
+      "If your personality was a meal, what would it be and why?",
+      "What's the laziest thing you've ever done and actually gotten away with?",
+      "What's a lie you told as a kid that spiraled completely out of control?",
+      "What's the most dramatic you've ever been over something tiny?",
+      "What's your funniest 'I thought this was a good idea' story?",
+      "If you could swap lives with anyone in this room for a week, who and why?",
+      "What's the most random thing you're actually an expert in?",
+      "What's a completely made-up skill you've pretended to have?",
+      "What would the group be shocked to find in your search history?",
+      "What's the most embarrassing song on your playlist?",
+      "If your life was a reality show, what would it be called and what genre?",
+      "What's the pettiest argument you've ever had that you're still not over?"
+    ],
+    dares: [
+      "Let the group rate your Spotify wrapped — or your YouTube history.",
+      "Invent a new dance move on the spot and teach it to the group.",
+      "Do a full news anchor impression reporting on something that happened tonight.",
+      "Let the group give you a five-word sentence to say casually on a call with someone.",
+      "Do your best impression of someone famous crying.",
+      "Attempt to moonwalk across the room.",
+      "Freestyle rap for 30 seconds about someone in the room.",
+      "Act out a silent movie scene chosen by the group.",
+      "Eat a spoonful of the most random condiment combination the group can think of.",
+      "Put on a full British accent and explain your greatest achievement.",
+      "Let the group give you a bizarre new nickname and you must respond to it for 3 rounds.",
+      "Do a dramatic TV commercial for yourself.",
+      "Recreate a famous movie scene with two other people in the group.",
+      "Let the group give you stage fright — perform for 1 minute while they heckle you.",
+      "Do a full cooking show for something you're pretending to cook.",
+      "Give a TED Talk on something completely meaningless.",
+      "Impersonate a robot trying to understand human emotion for 1 minute.",
+      "Let the group rewrite your dating profile bio and read it out loud.",
+      "Do an interpretive dance explaining your current mood.",
+      "Narrate your own life right now as if you're in a nature documentary."
+    ]
+  }
+];
+
+// =============================================
+// STATE
+// =============================================
+let selectedPackId = null;
+let selectedType = 'both'; // 'both' | 'truths' | 'dares'
+let customDares = [];
+let customTruths = [];
+let currentCType = 'dare';
+let activeTouches = {};
+let gameState = 'idle';
+let waitTimer = null;
+let countdownTimer = null;
+let countdownScheduled = null;
+let waitProgressTimer = null;
+// Track recently used to avoid back-to-back
+let recentlyUsed = { truths: [], dares: [] };
+const RECENT_AVOID = 3; // avoid repeating last N
+
+// =============================================
+// STORAGE
+// =============================================
+function save() {
+  try {
+    localStorage.setItem('wn_custom_dares', JSON.stringify(customDares));
+    localStorage.setItem('wn_custom_truths', JSON.stringify(customTruths));
+  } catch(e){}
+}
+function load() {
+  try {
+    const d = localStorage.getItem('wn_custom_dares');
+    const t = localStorage.getItem('wn_custom_truths');
+    if (d) customDares = JSON.parse(d);
+    if (t) customTruths = JSON.parse(t);
+  } catch(e){}
+}
+
+// =============================================
+// NAVIGATION
+// =============================================
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('hidden', s.id !== id));
+  if (id === 'onboarding') renderPacks();
+  if (id === 'custom-screen') renderCustomList();
+  if (id === 'play-screen') initPlay();
+}
+
+// =============================================
+// ONBOARDING
+// =============================================
+function setType(type, el) {
+  selectedType = type;
+  document.querySelectorAll('.type-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  renderPacks();
+}
+
+function renderPacks() {
+  const scroll = document.getElementById('packScroll');
+  let html = '';
+  const sections = [...new Set(PACKS.map(p => p.section))];
+  sections.forEach(sec => {
+    html += `<div class="pack-section-label">${sec}</div>`;
+    PACKS.filter(p => p.section === sec).forEach(p => {
+      const sel = selectedPackId === p.id;
+      html += `
+        <div class="pack-card ${sel ? 'selected' : ''}" 
+             style="--pack-color: ${p.color}"
+             onclick="selectPack('${p.id}')">
+          <div class="pack-name">${p.name}</div>
+          <div class="pack-desc">${p.desc}</div>
+          <div class="pack-count">${getPackCount(p)} cards</div>
+          <div class="pack-check">✓</div>
+        </div>`;
+    });
+  });
+  // Custom section
+  const totalCustom = customDares.length + customTruths.length;
+  if (totalCustom > 0) {
+    html += `<div class="pack-section-label">Custom</div>
+    <div class="pack-card ${selectedPackId === 'custom' ? 'selected' : ''}" 
+         style="--pack-color: #94a3b8"
+         onclick="selectPack('custom')">
+      <div class="pack-name">My Cards</div>
+      <div class="pack-desc">${customDares.length} dares, ${customTruths.length} truths added</div>
+      <div class="pack-count">${totalCustom} cards</div>
+      <div class="pack-check">✓</div>
+    </div>`;
+  }
+  scroll.innerHTML = html;
+  updateStartBtn();
+}
+
+function getPackCount(p) {
+  if (selectedType === 'both') return p.truths.length + p.dares.length;
+  if (selectedType === 'truths') return p.truths.length;
+  return p.dares.length;
+}
+
+function selectPack(id) {
+  selectedPackId = id;
+  renderPacks();
+}
+
+function updateStartBtn() {
+  const btn = document.getElementById('startBtn');
+  if (selectedPackId) {
+    btn.disabled = false;
+    btn.textContent = "Let's play";
+  } else {
+    btn.disabled = true;
+    btn.textContent = 'Select a pack to play';
+  }
+}
+
+function startGame() {
+  if (!selectedPackId) return;
+  goTo('play-screen');
+}
+
+// =============================================
+// CUSTOM
+// =============================================
+function setCType(t, el) {
+  currentCType = t;
+  document.querySelectorAll('.cs-type-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  renderCustomList();
+}
+
+function addCustom() {
+  const inp = document.getElementById('csInput');
+  const val = inp.value.trim();
+  if (!val) return;
+  if (currentCType === 'dare') customDares.push(val);
+  else customTruths.push(val);
+  save();
+  inp.value = '';
+  renderCustomList();
+  renderPacks();
+}
+
+function deleteCustom(type, i) {
+  if (type === 'dare') customDares.splice(i, 1);
+  else customTruths.splice(i, 1);
+  save();
+  renderCustomList();
+  renderPacks();
+}
+
+function renderCustomList() {
+  const list = document.getElementById('csList');
+  const arr = currentCType === 'dare' ? customDares : customTruths;
+  if (!arr.length) {
+    list.innerHTML = `<div class="cs-empty">Nothing added yet.<br>Type one below and hit +</div>`;
+    return;
+  }
+  list.innerHTML = arr.map((item, i) => `
+    <div class="cs-item">
+      <span class="cs-item-text">${escHtml(item)}</span>
+      <button class="cs-del" onclick="deleteCustom('${currentCType}',${i})">×</button>
+    </div>`).join('');
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// =============================================
+// PLAY
+// =============================================
+function initPlay() {
+  gameState = 'idle';
+  clearAllTimers();
+  activeTouches = {};
+  const area = document.getElementById('touch-area');
+  area.querySelectorAll('.tdot').forEach(d => d.remove());
+  document.getElementById('touchHint').style.opacity = '1';
+  document.getElementById('statusText').textContent = '';
+  document.getElementById('waitProgress').classList.remove('show');
+  document.getElementById('waitProgress').style.width = '0%';
+
+  const pack = getPack();
+  document.getElementById('playPackLabel').textContent = pack ? pack.name.toUpperCase() : 'CUSTOM';
+
+  // Start fluid canvas
+  startFluid();
+
+  // Bind touch
+  const touchArea = document.getElementById('touch-area');
+  touchArea.addEventListener('touchstart', onTouchStart, { passive: false });
+  touchArea.addEventListener('touchend', onTouchEnd, { passive: false });
+  touchArea.addEventListener('touchcancel', onTouchEnd, { passive: false });
+}
+
+function getPack() {
+  if (selectedPackId === 'custom') return null;
+  return PACKS.find(p => p.id === selectedPackId);
+}
+
+function getCards() {
+  let truths = [], dares = [];
+  if (selectedPackId === 'custom') {
+    truths = [...customTruths];
+    dares = [...customDares];
+  } else {
+    const p = getPack();
+    if (p) { truths = [...p.truths]; dares = [...p.dares]; }
+    truths = [...truths, ...customTruths];
+    dares = [...dares, ...customDares];
+  }
+  if (selectedType === 'truths') dares = [];
+  if (selectedType === 'dares') truths = [];
+  return { truths, dares };
+}
+
+function pickCard() {
+  const { truths, dares } = getCards();
+  const all = [
+    ...truths.map(t => ({ type: 'truth', text: t })),
+    ...dares.map(d => ({ type: 'dare', text: d }))
+  ];
+  if (!all.length) return null;
+
+  // Filter recent to avoid back-to-back
+  const recentTexts = new Set([...recentlyUsed.truths.slice(-RECENT_AVOID), ...recentlyUsed.dares.slice(-RECENT_AVOID)]);
+  let pool = all.filter(c => !recentTexts.has(c.text));
+  if (!pool.length) pool = all; // fallback if too small pool
+
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+  if (pick.type === 'truth') {
+    recentlyUsed.truths.push(pick.text);
+    if (recentlyUsed.truths.length > 10) recentlyUsed.truths.shift();
+  } else {
+    recentlyUsed.dares.push(pick.text);
+    if (recentlyUsed.dares.length > 10) recentlyUsed.dares.shift();
+  }
+  return pick;
+}
+
+// =============================================
+// TOUCH HANDLING
+// =============================================
+const DOT_COLORS = [
+  '#ffffff', '#e2e8f0', '#cbd5e1', '#94a3b8',
+  '#f8fafc', '#e0f2fe', '#fefce8', '#fdf2f8',
+  '#f0fdf4', '#fff7ed', '#fef2f2', '#f5f3ff',
+  '#ecfdf5', '#fefce8', '#fffbeb'
+];
+
+function onTouchStart(e) {
+  e.preventDefault();
+  if (gameState === 'picking' || gameState === 'done') return;
+
+  for (const t of e.changedTouches) {
+    if (Object.keys(activeTouches).length >= 15) break;
+    if (activeTouches[t.identifier]) continue;
+    const rect = document.getElementById('touch-area').getBoundingClientRect();
+    const x = t.clientX - rect.left;
+    const y = t.clientY - rect.top;
+    const dot = createDot(x, y, t.identifier);
+    activeTouches[t.identifier] = { x, y, el: dot };
+  }
+
+  vibrate(10);
+  updateHint();
+
+  if (gameState === 'waiting' && Object.keys(activeTouches).length > 0) {
+    clearTimeout(waitTimer);
+    waitTimer = null;
+    clearWaitProgress();
+    gameState = 'idle';
+  }
+
+  if (gameState === 'idle' && Object.keys(activeTouches).length >= 2) {
+    scheduleCountdown();
+  }
+}
+
+function onTouchEnd(e) {
+  e.preventDefault();
+  if (gameState === 'done') return;
+
+  for (const t of e.changedTouches) {
+    const id = t.identifier;
+    if (!activeTouches[id]) continue;
+    activeTouches[id].el.remove();
+    delete activeTouches[id];
+  }
+
+  updateHint();
+  const n = Object.keys(activeTouches).length;
+
+  if (gameState === 'countdown' || gameState === 'picking') {
+    clearTimeout(countdownScheduled);
+    clearInterval(countdownTimer);
+    if (n === 0) {
+      resetPlay();
+    } else {
+      gameState = 'waiting';
+      setStatus('Waiting... 2s then we continue');
+      showWaitProgress(2000);
+      waitTimer = setTimeout(() => {
+        if (Object.keys(activeTouches).length >= 1) startCountdown();
+        else resetPlay();
+      }, 2000);
+    }
+  } else if (gameState === 'idle') {
+    clearTimeout(countdownScheduled);
+    countdownScheduled = null;
+    if (n >= 2) scheduleCountdown();
+  }
+}
+
+function scheduleCountdown() {
+  clearTimeout(countdownScheduled);
+  countdownScheduled = setTimeout(() => {
+    if (Object.keys(activeTouches).length >= 2 && gameState === 'idle') {
+      startCountdown();
+    }
+  }, 500);
+}
+
+function createDot(x, y, id) {
+  const area = document.getElementById('touch-area');
+  const idx = Object.keys(activeTouches).length;
+  const dot = document.createElement('div');
+  dot.className = 'tdot idle';
+  dot.dataset.id = id;
+  dot.style.left = x + 'px';
+  dot.style.top = y + 'px';
+
+  const ring = document.createElement('div');
+  ring.className = 'tdot-ring';
+  ring.style.borderColor = DOT_COLORS[idx % DOT_COLORS.length];
+
+  const inner = document.createElement('div');
+  inner.className = 'tdot-inner';
+  inner.style.background = DOT_COLORS[idx % DOT_COLORS.length] + '22';
+
+  const label = document.createElement('div');
+  label.className = 'tdot-label';
+  label.textContent = 'GOTCHA';
+
+  dot.appendChild(ring);
+  dot.appendChild(inner);
+  dot.appendChild(label);
+  area.appendChild(dot);
+  return dot;
+}
+
+function setDotState(id, state) {
+  const t = activeTouches[id];
+  if (!t || !t.el) return;
+  t.el.className = `tdot ${state}`;
+}
+
+function updateHint() {
+  const n = Object.keys(activeTouches).length;
+  const hint = document.getElementById('touchHint');
+  hint.style.opacity = n > 0 ? '0' : '1';
+  if (n === 0) setStatus('');
+  else if (n === 1) setStatus('Need at least 2');
+}
+
+function setStatus(txt) {
+  document.getElementById('statusText').textContent = txt;
+}
+
+function resetPlay() {
+  gameState = 'idle';
+  clearAllTimers();
+  const area = document.getElementById('touch-area');
+  area.querySelectorAll('.tdot').forEach(d => d.remove());
+  activeTouches = {};
+  document.getElementById('touchHint').style.opacity = '1';
+  setStatus('');
+  clearWaitProgress();
+}
+
+// =============================================
+// COUNTDOWN + PICK ANIMATION
+// =============================================
+let countdownVal = 0;
+
+function startCountdown() {
+  if (gameState === 'picking') return;
+  gameState = 'countdown';
+  clearWaitProgress();
+  countdownVal = 3;
+
+  Object.keys(activeTouches).forEach(id => setDotState(id, 'spinning'));
+  setStatus(`${countdownVal}`);
+  vibrate([50, 50, 50]);
+
+  countdownTimer = setInterval(() => {
+    countdownVal--;
+    if (countdownVal <= 0) {
+      clearInterval(countdownTimer);
+      setStatus('');
+      beginPickAnimation();
+    } else {
+      setStatus(`${countdownVal}`);
+      vibrate(30);
+    }
+  }, 1000);
+}
+
+function beginPickAnimation() {
+  gameState = 'picking';
+  const ids = Object.keys(activeTouches);
+  if (ids.length === 0) { resetPlay(); return; }
+  if (ids.length === 1) { revealWinner(ids[0], ids); return; }
+
+  const winner = ids[Math.floor(Math.random() * ids.length)];
+  let step = 0;
+  let currentIdx = 0;
+  const baseSpeed = 120; // ms per step
+
+  // Decide: will we do a fake-out? Lower probability ~30%
+  const doFakeout = Math.random() < 0.3;
+  // Fakeout: we'll appear to stop on a non-winner, then switch last minute
+  let fakeoutIdx = -1;
+  if (doFakeout) {
+    const nonWinners = ids.filter(id => id !== winner);
+    const fakeoutId = nonWinners[Math.floor(Math.random() * nonWinners.length)];
+    fakeoutIdx = ids.indexOf(fakeoutId);
+  }
+
+  const totalSteps = 18 + ids.length * 2; // more players = longer
+
+  function nextStep() {
+    if (!activeTouches[ids[0]]) return; // aborted
+
+    // Dim all
+    ids.forEach(id => setDotState(id, 'dim'));
+
+    let showIdx;
+    const isNearEnd = step >= totalSteps - 4;
+
+    if (doFakeout && step === totalSteps - 5) {
+      // Slow down and appear to land on fakeout
+      showIdx = fakeoutIdx;
+    } else if (doFakeout && step === totalSteps - 4) {
+      // Slow more — still on fakeout
+      showIdx = fakeoutIdx;
+    } else if (doFakeout && step >= totalSteps - 3) {
+      // SWITCH to winner — the "last minute" shock
+      showIdx = ids.indexOf(winner);
+    } else if (isNearEnd) {
+      showIdx = ids.indexOf(winner);
+    } else {
+      currentIdx = (currentIdx + 1) % ids.length;
+      showIdx = currentIdx;
+    }
+
+    setDotState(ids[showIdx], 'highlight');
+    vibrate(8);
+
+    step++;
+
+    if (step >= totalSteps) {
+      setTimeout(() => revealWinner(winner, ids), 200);
+      return;
+    }
+
+    // Speed: starts fast, slows down near end
+    let delay = baseSpeed;
+    if (step > totalSteps * 0.5) delay = baseSpeed * 1.4;
+    if (step > totalSteps * 0.7) delay = baseSpeed * 2;
+    if (step > totalSteps * 0.85) delay = baseSpeed * 3.5;
+    if (doFakeout && step >= totalSteps - 5 && step <= totalSteps - 3) {
+      delay = baseSpeed * 5; // dramatic pause on fakeout
+    }
+
+    setTimeout(nextStep, delay);
+  }
+
+  nextStep();
+}
+
+function revealWinner(winnerId, allIds) {
+  gameState = 'done';
+  vibrate([0, 50, 100, 50, 200]);
+
+  allIds.forEach(id => {
+    if (id === winnerId) {
+      setDotState(id, 'winner');
+    } else {
+      setDotState(id, 'loser');
+    }
+  });
+
+  setStatus('');
+  setTimeout(() => showResult(allIds.length), 1400);
+}
+
+// =============================================
+// RESULT SCREEN
+// =============================================
+function showResult(playerCount) {
+  launchConfetti();
+
+  const card = pickCard();
+  document.getElementById('resultTitle').textContent = "IT'S YOU";
+  document.getElementById('resultEyebrow').textContent =
+    `Picked from ${playerCount} ${playerCount === 1 ? 'finger' : 'fingers'}`;
+
+  const pack = getPack();
+  document.getElementById('resultTypeTag').textContent =
+    pack ? pack.name : 'Custom';
+
+  const inner = document.getElementById('cardInner');
+  if (card) {
+    inner.innerHTML = `
+      <div class="result-card">
+        <div class="result-card-label">${card.type === 'truth' ? 'Truth' : 'Dare'}</div>
+        <div class="result-card-text">${escHtml(card.text)}</div>
+      </div>`;
+  } else {
+    inner.innerHTML = `<p class="no-card-msg">No cards set up.<br>Add some on the home screen.</p>`;
+  }
+
+  goTo('result-screen');
+
+  // Remove play listeners to avoid ghost touches
+  const area = document.getElementById('touch-area');
+  area.removeEventListener('touchstart', onTouchStart);
+  area.removeEventListener('touchend', onTouchEnd);
+  area.removeEventListener('touchcancel', onTouchEnd);
+}
+
+function playAgain() {
+  goTo('play-screen');
+}
+
+function confirmHome() {
+  goTo('onboarding');
+}
+
+// =============================================
+// WAIT PROGRESS BAR
+// =============================================
+function showWaitProgress(duration) {
+  const bar = document.getElementById('waitProgress');
+  bar.classList.add('show');
+  bar.style.transition = 'none';
+  bar.style.width = '100%';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    bar.style.transition = `width ${duration}ms linear`;
+    bar.style.width = '0%';
+  }));
+}
+function clearWaitProgress() {
+  const bar = document.getElementById('waitProgress');
+  bar.classList.remove('show');
+  bar.style.width = '0%';
+}
+
+// =============================================
+// TIMERS
+// =============================================
+function clearAllTimers() {
+  clearTimeout(waitTimer);
+  clearTimeout(countdownScheduled);
+  clearInterval(countdownTimer);
+  waitTimer = null; countdownScheduled = null; countdownTimer = null;
+}
+
+// =============================================
+// VIBRATION
+// =============================================
+function vibrate(pattern) {
+  try { if (navigator.vibrate) navigator.vibrate(pattern); } catch(e){}
+}
+
+// =============================================
+// CONFETTI
+// =============================================
+function launchConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const pieces = [];
+  const colors = ['#ffffff','#f0f0f0','#d1d5db','#9ca3af','#6b7280','#e5e7eb'];
+  for (let i = 0; i < 80; i++) {
+    pieces.push({
+      x: Math.random() * canvas.width,
+      y: -10 - Math.random() * 100,
+      w: 4 + Math.random() * 8,
+      h: 2 + Math.random() * 4,
+      r: Math.random() * Math.PI * 2,
+      vx: (Math.random() - 0.5) * 4,
+      vy: 2 + Math.random() * 4,
+      vr: (Math.random() - 0.5) * 0.2,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      alpha: 1
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let alive = false;
+    pieces.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.r += p.vr;
+      if (p.y < canvas.height + 20) { alive = true; }
+      else { p.alpha -= 0.02; }
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.r);
+      ctx.globalAlpha = Math.max(0, p.alpha);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+    });
+    if (alive || pieces.some(p => p.alpha > 0)) requestAnimationFrame(draw);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  draw();
+}
+
+// =============================================
+// FLUID CANVAS — lightweight particle fluid
+// =============================================
+let fluidAnim = null;
+function startFluid() {
+  const canvas = document.getElementById('fluid-canvas');
+  canvas.classList.add('show');
+  const ctx = canvas.getContext('2d');
+  let W = canvas.width = window.innerWidth;
+  let H = canvas.height = window.innerHeight;
+
+  const particles = [];
+  const NUM = 18;
+  for (let i = 0; i < NUM; i++) {
+    particles.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: (Math.random() - 0.5) * 0.4,
+      r: 80 + Math.random() * 120,
+      alpha: 0.025 + Math.random() * 0.03,
+      hue: 200 + Math.random() * 40
+    });
+  }
+
+  let frame = 0;
+  function tick() {
+    fluidAnim = requestAnimationFrame(tick);
+    frame++;
+
+    ctx.clearRect(0, 0, W, H);
+
+    particles.forEach(p => {
+      p.x += p.vx + Math.sin(frame * 0.003 + p.y * 0.005) * 0.3;
+      p.y += p.vy + Math.cos(frame * 0.004 + p.x * 0.005) * 0.3;
+
+      if (p.x < -p.r) p.x = W + p.r;
+      if (p.x > W + p.r) p.x = -p.r;
+      if (p.y < -p.r) p.y = H + p.r;
+      if (p.y > H + p.r) p.y = -p.r;
+
+      const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
+      g.addColorStop(0, `hsla(${p.hue},20%,90%,${p.alpha})`);
+      g.addColorStop(1, `hsla(${p.hue},20%,90%,0)`);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = g;
+      ctx.fill();
+    });
+  }
+  tick();
+}
+
+// =============================================
+// SERVICE WORKER
+// =============================================
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+// =============================================
+// INIT
+// =============================================
+load();
+renderPacks();
+</script>
+</body>
+</html>
